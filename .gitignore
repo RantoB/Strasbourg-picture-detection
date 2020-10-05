@@ -1,0 +1,10 @@
+# __pycache__
+__pycache__/
+
+#jupyter notebook
+.ipynb_checkpoints/
+
+# Data and models
+Models/
+data/
+Graph/
