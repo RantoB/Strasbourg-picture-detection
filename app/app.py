@@ -49,6 +49,16 @@ infos.append(html.P(children=["- Jeux de piste géants au centre ville de Strasb
 infos.append(html.P(children=["Développé par ", html.A(children="Bertrand BURCKER",
         href="https://www.linkedin.com/in/bertrand-burcker-a6192655/")]))
 
+# info.append(html.Div([<div class="LI-profile-badge",
+#   data-version="v1",
+#    data-size="medium",
+#     data-locale="fr_FR",
+#      data-type="horizontal",
+#       data-theme="light",
+#        data-vanity="bertrand-burcker-a6192655"> <a class="LI-simple-link" ,
+#                                         href='https://fr.linkedin.com/in/bertrand-burcker-a6192655?trk=profile-badge'> Bertrand Burcker</a>
+#                                         </div>)
+
 def consecutive_elements(elements: list)-> list:
 
     result = list()
@@ -166,6 +176,10 @@ app.layout = html.Div([
     'margin-right':'12.5%'
          }
 )
+
+# app.scripts.append_script([{"external_url": "https://platform.linkedin.com/badges/js/profile.js",
+#                             "async": True,
+#                             "defer": True}])
 
 def prediction(image_arr: np.ndarray) -> tuple:
     """
