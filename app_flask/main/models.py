@@ -1,7 +1,7 @@
 from main import db, login_manager
 from datetime import datetime as dt
 
-from flask_login import UserMixinn
+from flask_login import UserMixin
 # This provides default implementations
 # for the methods that Flask-Login expects user objects to have.
 

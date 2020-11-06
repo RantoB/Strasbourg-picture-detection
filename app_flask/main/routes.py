@@ -6,7 +6,7 @@ from flask import render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user, login_required
 
 from main import app, db, bcrypt
-from main.forms import RegistrationForm, LoginForm, UpdateAccountForm
+from main.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from main.models import User, Post
 
 infos_1 = [
@@ -55,24 +55,41 @@ infos_2 = [
     },
 ]
 
+posts = [
+    {
+        'title':'Météo',
+        'date':'Jeu. 5 nov 2020',
+        'content':'Il fait beau et chaud !',
+        'author':'Ranto'
+    },
+    {
+        'title':'Temps',
+        'date':'Mer. 4 nov 2020',
+        'content':'Il fauit froid !!',
+        'author':'Clem'
+    }
+]
+
 @app.route("/")
 def accueil():
     return render_template('accueil.html',
                             infos_1=infos_1,
                             infos_2=infos_2)
 
+@app.route("/articles")
+def page_posts():
+    return render_template('page.html',
+                            posts=posts,
+                            title='Articles')
+
 @app.route("/statues")
 def page_statues():
     return render_template('page.html',
-                            infos_1=infos_1,
-                            infos_2=infos_2,
                             title='Statues de Strasbourg')
 
 @app.route("/monuments")
 def page_monuments():
     return render_template('page.html',
-                            infos_1=infos_1,
-                            infos_2=infos_2,
                             title='Monuments de Strasbourg')
 
 
@@ -146,3 +163,13 @@ def account():
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Mon espace perso',
                             image_file=image_file, form=form)
+
+@app.route("/post/new", methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        flash('Votre article a été posté avec succès', 'success')
+        return redirect(url_for('page_posts'))
+    return render_template('create_post.html',
+                            title='Nouvel article', form=form)
