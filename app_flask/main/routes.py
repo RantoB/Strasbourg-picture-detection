@@ -2,7 +2,7 @@ import secrets
 import os
 from PIL import Image
 
-from flask import render_template, url_for, flash, redirect, request
+from flask import render_template, url_for, flash, redirect, request, abort
 from flask_login import login_user, current_user, logout_user, login_required
 
 from main import app, db, bcrypt
@@ -55,42 +55,44 @@ infos_2 = [
     },
 ]
 
-posts = [
-    {
-        'title':'Météo',
-        'date':'Jeu. 5 nov 2020',
-        'content':'Il fait beau et chaud !',
-        'author':'Ranto'
-    },
-    {
-        'title':'Temps',
-        'date':'Mer. 4 nov 2020',
-        'content':'Il fauit froid !!',
-        'author':'Clem'
-    }
-]
 
 @app.route("/")
 def accueil():
     return render_template('accueil.html',
-                            infos_1=infos_1,
-                            infos_2=infos_2)
+                           infos_1=infos_1,
+                           infos_2=infos_2)
+
 
 @app.route("/articles")
-def page_posts():
-    return render_template('page.html',
-                            posts=posts,
-                            title='Articles')
+def posts():
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.order_by(Post.date.desc()).paginate(page=page, per_page=2)
+    return render_template('posts.html',
+                           posts=posts,
+                           title='Articles')
+
+@app.route("/user/<string:username>")
+def posted_by(username):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = Post.query.filter_by(author=user)\
+        .order_by(Post.date.desc())\
+        .paginate(page=page, per_page=2)
+    return render_template('user_articles.html',
+                           posts=posts,
+                           title='Articles', user=user)
+
 
 @app.route("/statues")
 def page_statues():
     return render_template('page.html',
-                            title='Statues de Strasbourg')
+                           title='Statues de Strasbourg')
+
 
 @app.route("/monuments")
 def page_monuments():
     return render_template('page.html',
-                            title='Monuments de Strasbourg')
+                           title='Monuments de Strasbourg')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -99,15 +101,18 @@ def register():
         return redirect(url_for('accueil'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode("utf-8")
+        hashed_password = bcrypt.generate_password_hash(
+            form.password.data).decode("utf-8")
         user = User(username=form.username.data,
                     email=form.email.data,
                     password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash(f'{form.username.data}, votre espace a bien été créé avec succès.', 'success')
+        flash(
+            f'{form.username.data}, votre espace a bien été créé avec succès.', 'success')
         return redirect(url_for('accueil'))
     return render_template('register.html', form=form)
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -118,17 +123,21 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next') # to redirect to the page the user tried to access to
+            # to redirect to the page the user tried to access to
+            next_page = request.args.get('next')
             flash('Vous êtes connecté à votre espace perso.', 'success')
             return redirect(next_page) if next_page else redirect(url_for("accueil"))
         else:
-            flash('Echec de la connextion, vérifiez votre adresse e-mail ou votre mot de passe.', 'danger')
+            flash(
+                'Echec de la connextion, vérifiez votre adresse e-mail ou votre mot de passe.', 'danger')
     return render_template('login.html', form=form)
+
 
 @app.route("/logout")
 def logout():
     logout_user()
     return redirect(url_for('accueil'))
+
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
@@ -144,6 +153,7 @@ def save_picture(form_picture):
 
     return picture_filename
 
+
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
@@ -158,18 +168,65 @@ def account():
         flash('Vos informations personnelles ont été mises à jour.', 'success')
         return redirect(url_for('account'))
     elif request.method == 'GET':
-        form.username.data = current_user.username
-        form.email.data = current_user.email
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+        form.username.data = current_user.username # populate the form with current values
+        form.email.data = current_user.email # populate the form with current values
+    image_file = url_for(
+        'static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Mon espace perso',
-                            image_file=image_file, form=form)
+                           image_file=image_file, form=form)
+
 
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def new_post():
     form = PostForm()
     if form.validate_on_submit():
+        post = Post(title=form.title.data, 
+                    content=form.content.data, 
+                    author=current_user)
+        db.session.add(post)
+        db.session.commit()
         flash('Votre article a été posté avec succès', 'success')
-        return redirect(url_for('page_posts'))
+        return redirect(url_for('posts'))
     return render_template('create_post.html',
-                            title='Nouvel article', form=form)
+                           title='Nouvel article', form=form,
+                           legend='Nouvel article')
+
+
+@app.route("/post/<int:post_id>")
+def post(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('article.html', title=post.title, post=post)
+
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data 
+        post.content = form.content.data
+        db.session.commit()
+        flash('Votre article a bien été mis à jour.', 'success')
+        return redirect(url_for('post', post_id=post.id))
+
+    elif request.method == 'GET':
+        form.title.data = post.title # populate the form with current values
+        form.content.data = post.content # populate the form with current values
+    return render_template('create_post.html',
+                           title='Modifier l\'article', form=form, 
+                           legend='Modifier l\'article')
+
+
+@app.route("/post/<int:post_id>/delete", methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Votre article a bien supprimé.', 'success')
+    return redirect(url_for('accueil'))
