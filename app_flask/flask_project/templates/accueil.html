@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="container">
+  <div class="content-section">
+    <p class="text-center">Ceci est un prototye de modèle de deep learning pour la reconnaissance de monuments de Strasbourg. <br>Pour l'instant, seuls les six lieux suivants sont identifiables:</p>
+  </div>
+</section>
+<section class="container d-flex flex-wrap justify-content-between">
+  {% for pic, name in picture_ex.items() %}
+  <div class="content-section d-flex flex-column justify-content-between">
+      <img class="d-block ml-auto mr-auto" src="{{ url_for('static', filename='example_pics/' + pic) }}" alt="">
+      <p class="text-center width-150px">{{ name }}</p>
+  </div>
+  {% endfor%}
+</section>
+<section class="container d-flex flex-wrap justify-content-between">
+  <div class="content-section half-page">
+    {% for info in infos_1 %}
+      <p>{{ info.content }}</p>
+    {% endfor%}
+  </div>
+  <div class="content-section half-page"">
+    <div class="content-section d-flex flex-column justify-content-around ">
+      <form action="" method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag()}}
+        <fieldset>
+          <div class="form-group">
+            <label>Glissez votre image ici ou parcourez vos dossiers.</label>
+            {{ form.picture(class="form-control-file") }}
+          </div>
+        </fieldset>
+        <div class="form-group">
+          {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+      </form>
+      <img class="ml-auto mr-auto" src="{{ url_for('static', filename='tested_pics/' + picture_filename) }}" alt="">
+      <br>
+      <p class="text-center">{{ result }}</p>
+    </div>
+  </div>
+</section>
+<section class="container">
+  <div class="content-section">
+    <ul>
+      {% for info in infos_2 %}
+      <li>{{ info.content }}</li>
+      {% endfor%}
+    </ul>
+  </div>
+</section>
+{% endblock content %}
