@@ -19,21 +19,24 @@
       <p>{{ info.content }}</p>
     {% endfor%}
   </div>
-  <div class="content-section half-page"">
+  <div class="content-section half-page">
     <div class="content-section d-flex flex-column justify-content-around ">
       <form action="" method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag()}}
         <fieldset>
           <div class="form-group">
             <label>Glissez votre image ici ou parcourez vos dossiers.</label>
+            <input class="form-control-file" id="picture" name="picture" required="" type="file">
+            <!--
             {{ form.picture(class="form-control-file") }}
+            -->
           </div>
         </fieldset>
         <div class="form-group">
           {{ form.submit(class="btn btn-outline-info") }}
         </div>
       </form>
-      <img class="ml-auto mr-auto" src="{{ url_for('static', filename='tested_pics/' + picture_filename) }}" alt="">
+      <img class="img-fluid ml-auto mr-auto" src="{{ url_for('static', filename='tested_pics/' + picture_filename) }}" alt="">
       <br>
       <p class="text-center">{{ result }}</p>
     </div>
@@ -41,9 +44,10 @@
 </section>
 <section class="container">
   <div class="content-section">
-    <ul>
+    <ul class="list-unstyled">
       {% for info in infos_2 %}
       <li>{{ info.content }}</li>
+      <br>
       {% endfor%}
     </ul>
   </div>

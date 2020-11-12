@@ -3,8 +3,14 @@ __pycache__/
 
 #jupyter notebook
 .ipynb_checkpoints/
+draft.ipynb
+DRAFT.ipynb
 
-# Data and models
+# Data, models, pictures
 Models/
 data/
 Graph/
+*_pics/
+
+# opencv git repository
+opencv/

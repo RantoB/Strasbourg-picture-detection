@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import cv2
 from PIL import Image
@@ -6,6 +7,8 @@ from flask import current_app
 import os
 import secrets
 from tensorflow.keras.models import load_model
+
+logging.basicConfig(level=logging.DEBUG)
 
 infos_1 = [
     {
@@ -72,6 +75,7 @@ def prediction(image_path) -> tuple:
     """
     model_2 = load_model(os.path.join(current_app.root_path, 'static/Models/model_2'))
     model_3 = load_model(os.path.join(current_app.root_path, 'static/Models/model_3'))
+
     # openning with cv2 and preprocessing for models
     image_arr = cv2.imread(image_path)
     image_arr = cv2.resize(image_arr, (64, 64))
@@ -91,25 +95,25 @@ def result_for_user(picture_filename)-> str:
     """
     Description on going
     """
+    if picture_filename != 'favicon.ico':
+        with open(os.path.join(current_app.root_path, 'static/data/data-64.pkl'), 'rb') as f:
+            data = pickle.load(f)
+        target_names = data['target_name_for_answer']
 
-    with open(os.path.join(current_app.root_path, 'static/data/data-64.pkl'), 'rb') as f:
-        data = pickle.load(f)
-    target_names = data['target_name_for_answer']
+        image_path = os.path.join(current_app.root_path, "static/tested_pics", picture_filename)
 
-    image_path = os.path.join(current_app.root_path, "static/tested_pics", picture_filename)
+        pred, proba_pred = prediction(image_path)
 
-    pred, proba_pred = prediction(image_path)
+        if proba_pred >= .85:
+            return f'Cette photo montre {target_names[np.argmax(pred)]}'
 
-    if proba_pred >= .85:
-        return f'Cette photo montre {target_names[np.argmax(pred)]}'
+        elif proba_pred < .85 and proba_pred >= .7:
+            pred_sort = np.argsort(pred[0])[-2:]
+            res = f'Je ne suis pas sûr de moi, je dirais qu\'il s\'agit de {target_names[pred_sort[1]]}, mais j\'hésite aussi avec {target_names[pred_sort[0]]}'
+            return res
 
-    elif proba_pred < .85 and proba_pred >= .7:
-        pred_sort = np.argsort(pred[0])[-2:]
-        res = f'Je ne suis pas sûr de moi, je dirais qu\'il s\'agit de {target_names[pred_sort[1]]}, mais j\'hésite aussi avec {target_names[pred_sort[0]]}'
-        return res
-
-    else:
-        return 'Je suis désolé.\nA priori je ne sais pas que quoi il s\'agit.\n Pourriez-vous m\'envoyer une autre photo ?'
+        else:
+            return 'Je suis désolé.\nA priori je ne sais pas que quoi il s\'agit.\n Pourriez-vous m\'envoyer une autre photo ?'
 
 def picture_examples():
     picture_list = os.listdir(os.path.join(current_app.root_path, 'static/example_pics'))

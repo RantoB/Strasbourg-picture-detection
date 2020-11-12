@@ -1,8 +1,11 @@
+import logging
 import os
-from flask import Blueprint, render_template, url_for, redirect
+from flask import Blueprint, render_template, url_for, redirect, request
 from flask_project.main.forms import PictureForm
 from flask_project.main.utils import (infos_1, infos_2, pic_names, picture_examples,
                                         save_picture, result_for_user)
+
+logging.basicConfig(level=logging.DEBUG)
 
 main = Blueprint('main', __name__)
 
